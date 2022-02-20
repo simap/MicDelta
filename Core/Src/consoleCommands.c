@@ -95,13 +95,13 @@ static eCommandResult_T ConsoleCommandMic(const char buffer[]) {
 			md = &micData1;
 			break;
 		case 2:
-			md = &micData1;
+			md = &micData2;
 			break;
 		case 3:
-			md = &micData1;
+			md = &micData3;
 			break;
 		case 4:
-			md = &micData1;
+			md = &micData4;
 			break;
 		default:
 			result = COMMAND_ERROR;
@@ -111,8 +111,9 @@ static eCommandResult_T ConsoleCommandMic(const char buffer[]) {
 			ConsoleSendParamInt16(md->dcOffset);
 			ConsoleIoSendString(STR_ENDLINE);
 
+			delayUs(6000); //ensure we have enough contiguous samples
 			stopSampling();
-			HAL_Delay(2); //in case a conversion is happening now
+			delayUs(20); //give some time for any ongoing conversion to complete
 			micDataSnapshot(md);
 			startSampling(); //can sample while we process the data
 
@@ -130,8 +131,6 @@ static eCommandResult_T ConsoleCommandMic(const char buffer[]) {
 }
 
 static eCommandResult_T ConsoleCommandAngle(const char buffer[]) {
-	q15_t detectedAngle;
-	q15_t strength;
 	int16_t angleNumber;
 	eCommandResult_T result;
 	result = ConsoleReceiveParamInt16(buffer, 1, &angleNumber);
@@ -148,38 +147,15 @@ static eCommandResult_T ConsoleCommandAngle(const char buffer[]) {
 			result = COMMAND_ERROR;
 		}
 		if (COMMAND_SUCCESS == result) {
+			delayUs(6000); //ensure we have enough contiguous samples
 			stopSampling();
-			HAL_Delay(2); //in case a conversion is happening now
-
-			uint32_t tstart = micros();
+			delayUs(20); //give some time for any ongoing conversion to complete
 			micDataSnapshot(af->md1);
 			micDataSnapshot(af->md2);
 			startSampling(); //can sample while we process the data
 
-			angleFinderProcess(af, &detectedAngle, &strength);
-			uint32_t tend = micros();
-
-			ConsoleIoSendString("correlation data: ");
-			ConsoleIoSendString(STR_ENDLINE);
-			ConsoleIoSendString("mic1\tmic2\tcorr");
-						ConsoleIoSendString(STR_ENDLINE);
-			for (int i = 0; i < ADC_BUF_SIZE; i++) {
-				ConsoleSendParamInt16(af->md1->workingBuffer[i]);
-				ConsoleIoSendString("\t");
-				ConsoleSendParamInt16(af->md2->workingBuffer[i]);
-				ConsoleIoSendString("\t");
-				// only show the middle bit of the correlation
-				ConsoleSendParamInt16(af->buffer[i + ADC_BUF_SIZE/2]);
-				ConsoleIoSendString(STR_ENDLINE);
-			}
-
-			ConsoleIoSendString("Angle found: ");
-			ConsoleSendParamInt16(detectedAngle);
-			ConsoleIoSendString(" in ");
-			ConsoleSendParamInt32(tend - tstart);
-			ConsoleIoSendString(" us.");
-			ConsoleIoSendString(STR_ENDLINE);
-
+			angleFinderProcess(af);
+			angleFinderDumpToConsole(af);
 		}
 	}
 	return result;

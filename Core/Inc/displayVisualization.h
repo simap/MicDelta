@@ -4,13 +4,7 @@
 #include "main.h"
 #include "app.h"
 #include "angleFinder.h"
-
-
-#define DISPLAY_BUFFER_WIDTH 8
-#define DISPLAY_BUFFER_HEIGHT 8
-
-
-#define DISPLAY_BUFFER_SIZE (DISPLAY_BUFFER_WIDTH * DISPLAY_BUFFER_HEIGHT * 3)
+#include "ws2812Driver.h"
 
 
 #ifdef __cplusplus
@@ -18,16 +12,17 @@ extern "C" {
 #endif
 
 typedef struct {
-	AngleFinder *afx;
-	AngleFinder *afy;
+	AngleFinder *angleFinderX;
+	AngleFinder *angleFinderY;
+	WS2812Driver *ws2812Driver;
 
 	uint8_t displayBuffer[DISPLAY_BUFFER_SIZE];
 
 } DisplayVisualizer;
 
 
-void displayVisualizerInit(AngleFinder *afx, AngleFinder *afy);
-void displayVisualizerProcess();
+void displayVisualizerInit(DisplayVisualizer *dv, AngleFinder *angleFinderX, AngleFinder *angleFinderY, WS2812Driver * ws2812Driver);
+void displayVisualizerProcess(DisplayVisualizer *dv);
 
 
 

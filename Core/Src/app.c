@@ -2,9 +2,12 @@
 
 #include "micData.h"
 #include "angleFinder.h"
+#include "ws2812Driver.h"
 #include "displayVisualization.h"
 #include "consoleUart.h"
 #include "console.h"
+#include "consoleio.h"
+#include <stdio.h>
 
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
@@ -58,6 +61,8 @@ MicData micData4;
 AngleFinder angleFinderX;
 AngleFinder angleFinderY;
 
+WS2812Driver ws2812Driver;
+
 DisplayVisualizer displayVisualizer;
 
 uint8_t scanMode = 0;
@@ -80,6 +85,7 @@ void init() {
 	//freeze everything when we debug
 	DBGMCU->APB1FZ = 0xffff;
 	DBGMCU->APB2FZ = 0xffff;
+
 
 
 	initConsoleUart(USART1, DMA1, LL_DMA_CHANNEL_4, LL_DMA_CHANNEL_5);
@@ -133,12 +139,9 @@ void init() {
 
 	//TOOD calc DC offset on ADC channels
 
-	//for now run these a few times
-
-	HAL_Delay(5);
-
+	//for now run these a few times, relying on the slow self-adjusting during process
+	HAL_Delay(5); //let ADCs capture some data
 	for (int i = 0; i < 40; i++) {
-		q15_t tmpBuf[ADC_BUF_SIZE];
 		micDataSnapshot(&micData1);
 		micDataSnapshot(&micData2);
 		micDataSnapshot(&micData3);
@@ -150,6 +153,14 @@ void init() {
 		micDataProcess(&micData4);
 	}
 
+	ws2812DriverInit(&ws2812Driver, DMA1, LL_DMA_CHANNEL_2, USART3);
+
+	displayVisualizerInit(&displayVisualizer, &angleFinderX, &angleFinderY, &ws2812Driver);
+
+	ConsoleIoSendString("Initialized");
+	ConsoleIoSendString(STR_ENDLINE);
+	ConsoleIoSendString(CONSOLE_PROMPT);
+	fflush(stdout); //necessary if stdout is line buffered
 
 }
 
@@ -160,25 +171,6 @@ void delayUs(uint32_t us) {
 	}
 }
 
-void scan1() {
-	q15_t detectedAngle;
-	q15_t strength;
-	stopSampling();
-	delayUs(100); //in case a conversion is happening now
-	uint32_t tstart = micros();
-	micDataSnapshot(angleFinderX.md1);
-	micDataSnapshot(angleFinderX.md2);
-	startSampling(); //can sample while we process the data
-
-	angleFinderProcess(&angleFinderX, &detectedAngle, &strength);
-	uint32_t tend = micros();
-
-	ConsoleSendParamInt16(detectedAngle);
-	ConsoleIoSendString("\t");
-	ConsoleSendParamInt16(strength);
-	ConsoleIoSendString(STR_ENDLINE);
-
-}
 
 void appMain() {
 
@@ -186,8 +178,7 @@ void appMain() {
 
 	while(1) {
 		ConsoleProcess();
-		if (scanMode) {
-			scan1();
-		}
+
+		displayVisualizerProcess(&displayVisualizer);
 	}
 }

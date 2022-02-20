@@ -111,10 +111,7 @@ void ConsoleInit(void)
 	uint32_t i;
 
 	ConsoleIoInit();
-	ConsoleIoSendString("Welcome to the Consolinator, your gateway to testing code and hardware.");	
-	ConsoleIoSendString(STR_ENDLINE);
-	ConsoleIoSendString(CONSOLE_PROMPT);
-	fflush(stdout); //necessary if stdout is line buffered
+
 	mReceivedSoFar = 0u;
 
 	for ( i = 0u ; i < CONSOLE_COMMAND_MAX_LENGTH ; i++)

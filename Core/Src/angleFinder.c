@@ -1,4 +1,5 @@
 #include "angleFinder.h"
+#include "console.h"
 
 
 void angleFinderInit(AngleFinder *af, MicData *md1, MicData *md2) {
@@ -6,7 +7,8 @@ void angleFinderInit(AngleFinder *af, MicData *md1, MicData *md2) {
 	af->md2 = md2;
 }
 
-void angleFinderProcess(AngleFinder *af, q15_t *angleOutput, q15_t *strength) {
+void angleFinderProcess(AngleFinder *af) {
+	uint32_t startTime = micros();
 	//get micdata ouputs
 	micDataProcess(af->md1);
 	micDataProcess(af->md2);
@@ -29,6 +31,33 @@ void angleFinderProcess(AngleFinder *af, q15_t *angleOutput, q15_t *strength) {
 
 	//FIXME for now just return the delta from center to see what we get
 
-	*angleOutput = (int16_t) maxIndex -  ANGLEFINDER_BUFFER_SIZE/2;
-	*strength = maxValue;
+	af->angle = (int16_t) maxIndex -  ANGLEFINDER_BUFFER_SIZE/2;
+	af->strength = maxValue;
+
+	af->lastProcessTimeUs = micros() - startTime;
+}
+
+void angleFinderDumpToConsole(AngleFinder *af) {
+	ConsoleIoSendString("correlation data: ");
+	ConsoleIoSendString(STR_ENDLINE);
+	ConsoleIoSendString("mic1\tmic2\tcorr");
+	ConsoleIoSendString(STR_ENDLINE);
+	for (int i = 0; i < ADC_BUF_SIZE; i++) {
+		ConsoleSendParamInt16(af->md1->workingBuffer[i]);
+		ConsoleIoSendString("\t");
+		ConsoleSendParamInt16(af->md2->workingBuffer[i]);
+		ConsoleIoSendString("\t");
+		// only show the middle bit of the correlation
+		ConsoleSendParamInt16(af->buffer[i + ADC_BUF_SIZE/2]);
+		ConsoleIoSendString(STR_ENDLINE);
+	}
+
+	ConsoleIoSendString("Angle found: ");
+	ConsoleSendParamInt16(af->angle);
+	ConsoleIoSendString(" strength ");
+	ConsoleSendParamInt16(af->strength);
+	ConsoleIoSendString(" in ");
+	ConsoleSendParamInt32(af->lastProcessTimeUs);
+	ConsoleIoSendString(" us.");
+	ConsoleIoSendString(STR_ENDLINE);
 }
