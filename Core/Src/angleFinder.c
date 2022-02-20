@@ -19,18 +19,14 @@ void angleFinderProcess(AngleFinder *af) {
 	arm_correlate_q15(af->md1->workingBuffer, ADC_BUF_SIZE, af->md2->workingBuffer, ADC_BUF_SIZE, af->buffer);
 
 	//find max, the position is most likely the phase offset of a sound
+	//TODO it should be possible to find a function that fits the correlated peak, and interpolate fractional deltas
 	q15_t maxValue;
 	uint32_t maxIndex;
 	arm_max_q15(af->buffer, ANGLEFINDER_BUFFER_SIZE, &maxValue, &maxIndex);
 
-	//TODO use the max value along with overall signal levels to determine if there is a strong correlation, or just noise
-
-	//TODO use delta compared to the maximum possible (based on the speed of sound between mics)
 
 	//TODO calc angle, which is a bit more complicated
-
-	//FIXME for now just return the delta from center to see what we get
-
+	//for now just use the delta from center
 	af->angle = (int16_t) maxIndex -  ANGLEFINDER_BUFFER_SIZE/2;
 	af->strength = maxValue;
 

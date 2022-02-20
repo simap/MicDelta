@@ -18,17 +18,11 @@ extern DMA_HandleTypeDef hdma_adc2;
 extern DMA_HandleTypeDef hdma_adc3;
 extern DMA_HandleTypeDef hdma_adc4;
 
-//extern DAC_HandleTypeDef hdac1;
-//
 extern OPAMP_HandleTypeDef hopamp1;
 extern OPAMP_HandleTypeDef hopamp2;
 extern OPAMP_HandleTypeDef hopamp3;
 extern OPAMP_HandleTypeDef hopamp4;
-//
-//extern TIM_HandleTypeDef htim4;
-//extern DMA_HandleTypeDef hdma_tim4_up;
 
-//extern UART_HandleTypeDef huart1;
 
 /*
  * a snap has a big pulse about 2ms, with trailing signal. about 400hz, 2khz, 20khz.
@@ -48,7 +42,11 @@ extern OPAMP_HandleTypeDef hopamp4;
  *
  * Slower sample rates have less phase resolution, and take longer to sample of course.
  *
- *
+ * Through experimentation, a sample rate of 100KHz with a 512 sample window gives decent results.
+ * This gives around +- 32 units of phase detection with mics 100mm apart to about 1700Hz.
+ * Above 1700Hz the wavelength is short enough that phsae detection can flip 180 degrees when
+ * the source sound is +-90 degrees from the sensor plane.
+ * Processing takes about 20ms per axis.
  *
  */
 
@@ -86,8 +84,6 @@ void init() {
 	DBGMCU->APB1FZ = 0xffff;
 	DBGMCU->APB2FZ = 0xffff;
 
-
-
 	initConsoleUart(USART1, DMA1, LL_DMA_CHANNEL_4, LL_DMA_CHANNEL_5);
 	ConsoleInit();
 
@@ -112,18 +108,22 @@ void init() {
 	HAL_OPAMP_Start(&hopamp3);
 	HAL_OPAMP_Start(&hopamp4);
 
-//	HAL_ADC_Start_DMA(&hadc1, (uint32_t *) &cbuf[0][0], ADC_BUF_SIZE);
-//	HAL_ADC_Start_DMA(&hadc2, (uint32_t *) &cbuf[1][0], ADC_BUF_SIZE);
-//	HAL_ADC_Start_DMA(&hadc3, (uint32_t *) &cbuf[2][0], ADC_BUF_SIZE);
-//	HAL_ADC_Start_DMA(&hadc4, (uint32_t *) &cbuf[3][0], ADC_BUF_SIZE);
-
 	micDataInit(&micData1, &hadc1);
 	micDataInit(&micData2, &hadc2);
 	micDataInit(&micData3, &hadc3);
 	micDataInit(&micData4, &hadc4);
 
+#if	FLIP_X_MICS
+	angleFinderInit(&angleFinderX, &micData2, &micData1);
+#else
 	angleFinderInit(&angleFinderX, &micData1, &micData2);
+#endif
+
+#if	FLIP_Y_MICS
+	angleFinderInit(&angleFinderY, &micData4, &micData3);
+#else
 	angleFinderInit(&angleFinderY, &micData3, &micData4);
+#endif
 
 
 	LL_TIM_ClearFlag_UPDATE(TIM3);
@@ -137,9 +137,8 @@ void init() {
 
 //	LL_TIM_EnableCounter(TIM4);
 
-	//TOOD calc DC offset on ADC channels
-
-	//for now run these a few times, relying on the slow self-adjusting during process
+	//TOOD calc DC offset on ADC channels. Even with opamp calibration the post-PGA DC can be pretty off
+	//for now run micDataProcess a few times, relying on the slow self-adjusting process
 	HAL_Delay(5); //let ADCs capture some data
 	for (int i = 0; i < 40; i++) {
 		micDataSnapshot(&micData1);
@@ -157,11 +156,10 @@ void init() {
 
 	displayVisualizerInit(&displayVisualizer, &angleFinderX, &angleFinderY, &ws2812Driver);
 
-	ConsoleIoSendString("Initialized");
+	ConsoleIoSendString("Initialized. Welcome to MicDelta, may I take your order?");
 	ConsoleIoSendString(STR_ENDLINE);
 	ConsoleIoSendString(CONSOLE_PROMPT);
 	fflush(stdout); //necessary if stdout is line buffered
-
 }
 
 void delayUs(uint32_t us) {
@@ -173,12 +171,9 @@ void delayUs(uint32_t us) {
 
 
 void appMain() {
-
 	init();
-
 	while(1) {
 		ConsoleProcess();
-
 		displayVisualizerProcess(&displayVisualizer);
 	}
 }
