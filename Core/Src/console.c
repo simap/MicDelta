@@ -6,6 +6,7 @@
 #include <string.h>  // for NULL
 #include <stdlib.h>  // for atoi and itoa (though this code implement a version of that)
 #include <stdbool.h>
+#include <stdio.h>
 #include "console.h"
 #include "consoleIo.h"
 #include "consoleCommands.h"
@@ -113,6 +114,7 @@ void ConsoleInit(void)
 	ConsoleIoSendString("Welcome to the Consolinator, your gateway to testing code and hardware.");	
 	ConsoleIoSendString(STR_ENDLINE);
 	ConsoleIoSendString(CONSOLE_PROMPT);
+	fflush(stdout); //necessary if stdout is line buffered
 	mReceivedSoFar = 0u;
 
 	for ( i = 0u ; i < CONSOLE_COMMAND_MAX_LENGTH ; i++)
@@ -169,14 +171,17 @@ void ConsoleProcess(void)
 			}
 			if ( ( cmdEndline != 0 ) && ( NOT_FOUND == found ) )
 			{
-				if (mReceivedSoFar > 2) /// shorter than that, it is probably nothing
-				{
-					ConsoleIoSendString("Command not found.");
+//				if (mReceivedSoFar > 2) /// shorter than that, it is probably nothing
+//				{
+					ConsoleIoSendString("Command not found.'");
+					ConsoleIoSendString(mReceiveBuffer);
+					ConsoleIoSendString("'");
 					ConsoleIoSendString(STR_ENDLINE);
-				}
+//				}
 			}
 			mReceivedSoFar = ConsoleResetBuffer(mReceiveBuffer, mReceivedSoFar, cmdEndline);
 			ConsoleIoSendString(CONSOLE_PROMPT);
+			fflush(stdout); //necessary if stdout is line buffered
 		}
 	}
 }

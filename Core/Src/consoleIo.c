@@ -6,6 +6,7 @@
 #include "consoleUart.h"
 
 uint8_t doEchoConsoleInput = 1;
+extern int __io_putchar(int ch);
 
 eConsoleError ConsoleIoInit(void)
 {

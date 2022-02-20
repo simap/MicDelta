@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "arm_math.h"
 
 
 
-
-#define ADC_BUF_SIZE (256)
+#define ADC_BUF_SIZE (512)
 
 
 #ifdef __cplusplus
