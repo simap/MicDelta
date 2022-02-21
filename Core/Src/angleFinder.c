@@ -1,6 +1,6 @@
 #include "angleFinder.h"
 #include "console.h"
-
+#include "consoleio.h"
 
 void angleFinderInit(AngleFinder *af, MicData *md1, MicData *md2) {
 	af->md1 = md1;

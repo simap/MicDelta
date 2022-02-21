@@ -23,6 +23,11 @@
 //need half a byte for each bit, and 24 bits
 #define WS2812_DRIVER_BITBUFFER_SIZE (DISPLAY_BUFFER_SIZE * 24/2)
 
+#define WS2812_DRIVER_COLORORDER_RED   1
+#define WS2812_DRIVER_COLORORDER_GREEN 0
+#define WS2812_DRIVER_COLORORDER_BLUE  2
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

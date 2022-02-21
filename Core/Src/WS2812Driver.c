@@ -1,6 +1,8 @@
 
 #include "ws2812Driver.h"
 #include "console.h"
+#include "consoleio.h"
+#include "pixelmap.h"
 
 extern uint8_t scanMode;
 
@@ -44,22 +46,31 @@ void ws2812DriverDraw(WS2812Driver *wd, uint8_t *pixels) {
 	//since these timings are constant,  ensure a fixed period of time has elapsed since the last call
 	//at 4mbps each byte in the bitBuffer takes 2.5us, adding 250us for latch.
 	const uint32_t microsPerFrame = (2.5 * WS2812_DRIVER_BITBUFFER_SIZE) + 250;
-
 	while (micros() - wd->lastDrawTimerUs < microsPerFrame) {
 		//wait
 	}
 
 	//fill the bit buffer for sending out pixel data over UART in WS2812 format
 	uint32_t bbPos = 0;
-	for (int pi = 0; pi < DISPLAY_BUFFER_SIZE; pi++) {
-		//TODO map x,y to the matrix display
-		uint8_t c = pixels[pi];
-		//MSB first for WS2812 pixel bits
-		wd->bitBuffer[bbPos++] = bits[c >> 6];
-		wd->bitBuffer[bbPos++] = bits[(c >> 4) & 0x03];
-		wd->bitBuffer[bbPos++] = bits[(c >> 2) & 0x03];
-		wd->bitBuffer[bbPos++] = bits[c & 0x03];
+	uint8_t elements[3];
+	for (int y = 0; y < DISPLAY_BUFFER_HEIGHT; y++) {
+		for (int x = 0; x < DISPLAY_BUFFER_WIDTH; x++) {
+			//remap pixel for output
+			uint32_t pixelOffset = getOutputPixelOffset(x, y);
+			//re-order colors for pixels
+			elements[WS2812_DRIVER_COLORORDER_RED]   = pixels[pixelOffset    ];
+			elements[WS2812_DRIVER_COLORORDER_GREEN] = pixels[pixelOffset + 1];
+			elements[WS2812_DRIVER_COLORORDER_BLUE]  = pixels[pixelOffset + 2];
 
+			for (int ei = 0; ei < 3;  ei++) {
+				uint8_t element = elements[ei];
+				//MSB first for WS2812 pixel bits
+				wd->bitBuffer[bbPos++] = bits[(element >> 6) & 0x03];
+				wd->bitBuffer[bbPos++] = bits[(element >> 4) & 0x03];
+				wd->bitBuffer[bbPos++] = bits[(element >> 2) & 0x03];
+				wd->bitBuffer[bbPos++] = bits[element        & 0x03];
+			}
+		}
 	}
 
 	//start the DMA transfer

@@ -1,6 +1,7 @@
 #include "displayVisualization.h"
 #include "console.h"
 #include "consoleio.h"
+#include "pixelmap.h"
 
 #define clamp(n, low, high)  (n > high ? high : (n < low ? low : n))
 extern uint8_t scanMode;
@@ -106,24 +107,15 @@ static void displayVisualizerPaint(DisplayVisualizer *dv, q15_t angleX, q15_t st
 		ConsoleIoSendString(STR_ENDLINE);
 	}
 
-	//flip odd rows for zig-zag wiring
-	if (y & 1) {
-		x = 7 - x;
-	}
 
 	//paint low strength as red (fading to black), through green, to purple for the highest values
 	float strength = (strengthX + strengthY) / 32767.0f;
 	if (strength > 1)
 		strength = 1;
-	uint8_t rgb[3];
-	hsv(strength * .7, 1, strength * 10, rgb);
 
-	//map rgb to grb for the LEDs
-	//TODO move this to the driver & pixelmap
-	int pixelOffset = (y * DISPLAY_BUFFER_WIDTH + x) * 3;
-	dv->displayBuffer[pixelOffset]     = rgb[1];
-	dv->displayBuffer[pixelOffset + 1] = rgb[0];
-	dv->displayBuffer[pixelOffset + 2] = rgb[2];
+	//draw a color to this pixel
+	uint32_t pixelOffset = getDisplayPixelOffset(x, y);
+	hsv(strength * .7, 1, strength * 10, &dv->displayBuffer[pixelOffset]);
 
 	//TODO maybe something cooler, like a radial gradient using fractional pixel coordinates
 	//could squish/fade more on one axis than another if it had relatively lower strength
