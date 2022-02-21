@@ -12,14 +12,14 @@ volatile uint16_t txPos = 0;
 volatile static int uartErrors; //for debugging
 
 
-uint8_t rxBuf[CONSOLEUART_RX_BUF];
-uint16_t rxPos = 0;
+static uint8_t rxBuf[CONSOLEUART_RX_BUF];
+static uint16_t rxPos = 0;
 
 
-USART_TypeDef *usart;
-DMA_TypeDef *dma;
-uint32_t txDmaChannel;
-uint32_t rxDmaChannel;
+static USART_TypeDef *usart;
+static DMA_TypeDef *dma;
+static uint32_t txDmaChannel;
+static uint32_t rxDmaChannel;
 
 /**
  *
@@ -53,12 +53,14 @@ void initConsoleUart(USART_TypeDef *initUsart, DMA_TypeDef *initDma, uint32_t in
 
 void consoleUartIsr() {
 	//check all the uart error conditions
-	if (USART1->ISR & (USART_ISR_FE | USART_ISR_ORE | USART_ISR_NE)) {
+	if (LL_USART_IsActiveFlag_FE(usart) || LL_USART_IsActiveFlag_ORE(usart) || LL_USART_IsActiveFlag_NE(usart)) {
 		//we don't really care to handle the error in any special way
 		//this is more for debugging purposes and to clear the error bits
 		uartErrors++;
-		//to clear these errors, write 1 to the appropriate bits in USART_ICR
-		USART1->ICR |= USART_ICR_FECF | USART_ICR_ORECF | USART_ICR_NCF;
+		//clear any errors
+		LL_USART_ClearFlag_FE(usart);
+		LL_USART_ClearFlag_ORE(usart);
+		LL_USART_ClearFlag_NE(usart);
 	}
 }
 
