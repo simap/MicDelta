@@ -104,6 +104,7 @@ static void displayVisualizerPaint(DisplayVisualizer *dv, q15_t angleX, q15_t st
 		ConsoleSendParamInt16(x);
 		ConsoleIoSendString(",");
 		ConsoleSendParamInt16(y);
+		ConsoleIoSendString(")");
 		ConsoleIoSendString(STR_ENDLINE);
 	}
 
