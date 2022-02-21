@@ -77,6 +77,13 @@ uint32_t micros() {
 	return LL_TIM_GetCounter(TIM2);
 }
 
+void delayUs(uint32_t us) {
+	uint32_t tstart = micros();
+	while (micros() - tstart < us) {
+		//wait
+	}
+}
+
 
 void init() {
 
@@ -162,12 +169,6 @@ void init() {
 	fflush(stdout); //necessary if stdout is line buffered
 }
 
-void delayUs(uint32_t us) {
-	uint32_t tstart = micros();
-	while (micros() - tstart < us) {
-		//wait
-	}
-}
 
 
 void appMain() {
