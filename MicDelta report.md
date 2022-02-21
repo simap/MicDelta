@@ -8,7 +8,7 @@ Visualize the direction of sounds in 2D. Given an array of microphones, the phas
 
 A small 8x8 LED matrix displays the aproximate relative 2D angle of the strongest audio signal as a dot. The field of view is about +- 60 degrees, more extreme angles displayed on the edge.
 
-Complex audio signals work well, as do sine waves, up to about 1700Hz. Above 1700Hz the reliable field of view diminishes.
+Complex audio signals work well, as do sine waves, up to about 1,700Hz. Above 1,700Hz the reliable field of view diminishes.
 
 # Hardware Description
 
@@ -23,13 +23,13 @@ This project shares some similarities with [TapTDOA](https://hackaday.io/project
 1. Electret microphones were used and 10K bias resistors were added.
 2. The analog filters were modified to pass a larger range of frequencies, with the 2nd low pass filter removed.
 3. An 8x8 WS2812 / SK6812 8x8 LED matrix display was added and connected to the USB power supply.
-4. Microphones are placed about 100mm apart along opposite ends of each axis, attached to the back of the display, facing in the opposite direction.
+4. Microphones are placed about 100mm apart along opposite ends of each axis, attached to the back of the display, facing in the opposite direction. This gives good time delta information up to about 1,700Hz where the delay hits 180 degrees and the direction can't be determined.
 
 ## Peripherals
 
-* Timers generate triggers for ADCs, and are used for microsecond timekeeping.
-* The PGA peripheral is used to boost the microphone signal.
-* ADCs sample microphone signals from the PGA and trigger DMA.
+* Timers generate triggers for ADCs (TIM3), and are used for microsecond timekeeping (TIM2).
+* Four PGA peripherals are used to boost the microphone signal.
+* Four ADCs sample microphone signals from the PGAs and trigger DMA.
 * DMA copies data from the ADCs to circular buffers. DMA is also used for the console (ping-pong) and WS2812 driver (one-shot).
 * The DAC is used to generate a programmable reference voltage used in combination with the PGA to keep the biased microphone signal within range after amplification.
 * A UART is used to generate WS2812 / SK9822 compatible data streams for these addressable (smart) LEDs. A UART is also used for the serial console.
@@ -55,6 +55,8 @@ STM32CubeIDE configuraiton tools were used to generate LL and HAL driver code, i
 The STM32CubeIDE generated code is modified as little as possible, with most of the application bootstrapping done in `app.c`. Likewise `app.h` has various configurable settings.
 
 Where possible HAL and LL drivers and constants are used, and direct modification of registers is avoided unless necessary.
+
+Where possible CMSIS DSP library functions are used, and benefit from this MCU's DSP / SIMD instructions.
 
 The console from [Elecia White's reusable repo](https://github.com/eleciawhite/reusable) was used with minor modification. It is in the public domain via the [unlicense](https://unlicense.org/) license.
 
@@ -218,6 +220,7 @@ The code has a number of FIXMEs and TODOs for improvement or enhancement, summar
   * The MicData module might benefit slightly by using a Mem2Mem DMA transfer instead of memcpy when unwrapping the circular buffer. Alternatively, a one-shot or ping-pong buffer could be used and obviate the need to unwrapp/copy. 
 * Analog / sample quality - supply spikes on the scope and phantom signals in ADC samples occurred when samples were taken while the system was busy. This is likely due to poor board analog design and could be fixed in hardware. A workaround in firmware is in place, but reduces throughput slightly.
 * DC offset calculation improvements - the current implemenation tends to bounce around 1 LSB.
+* Improve microphone hardware - pre amplificiation and blocking sounds behind the micriphone could improve the signal quality and device usefulness.
 
 # Grading - Self Assessment
 
