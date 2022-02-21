@@ -228,9 +228,9 @@ Note: I pivoted at the last minute so this project does not follow previous assi
 
 Criteria  | Score | Explaination
 ------------- | ------------- | -------------
-Project meets minimum project goals | 1 | A button was not added. This hardware does not have any exposed pins I could use, and the bodges in place were so fragile (and kept breaking) I was not willing to risk bodging directly to the MCU to add a button. I was tempted to get a really loud clicky button and trigger an ADC watchdog interrupt via a microphone, that would count, right? Other project goals were met.
-Completeness of deliverables | 2 | I'm tempted to leave this blank and create a self negating condition. The code / project files include most of this information.
+Project meets minimum project goals | 1 | A button was not added. This hardware does not have any exposed pins I could use, and the bodges in place were so fragile (and kept breaking) I was not willing to risk bodging directly to the MCU to add a button. I was tempted to get a really loud clicky button and trigger an ADC watchdog interrupt via a microphone, that would count, right? The state machines other than the console are not quite up to par. Other project goals were met.
+Completeness of deliverables | 2 | The code, project files, report, and demo / walkthrough video include the requested deliverables. 
 Clear intentions and working code | 2 | The system appears to work as described.
-Reusing code | 3 | Student code is identified, 3rd party licenses documented, and version control shows an evolution of the written code. I should probably add a license to my code though!
+Reusing code | 3 | Student code is identified, 3rd party licenses documented, and version control shows an evolution of the written code. The code written for this project is release under the MIT license.
 Originality and scope of goals | 1 or 3 | I believe this is the bare minimum, but I hope it has originality and novelty!
 
